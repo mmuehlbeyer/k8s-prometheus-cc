@@ -1,38 +1,24 @@
 
-==== add the prometheus helm repo
-
+==== create a namespace for prometheus
 [source,bash]
 ----
-helm repo add prometheus-community https://prometheus-community.github.io/helm-charts 
-helm repo add stable https://charts.helm.sh/stable
-
-----
-
-update the repos
-
-[source,bash]
-----
-helm repo update
-----
-
-
 kubectl create namespace prometheus
 
-helm install prometheus prometheus-community/kube-prometheus-stack -n prometheus
+----
 
+=== create cluster role
+[source,bash]
+----
+kubectl create -f clusterRole.yaml -n prometheus
+----
+ 
+=== create service user via confluent cli
 
-port forward
-
-kubectl port-forward deployment/prometheus-grafana 3000 -n prometheus
-
-get the admin secret
-kubectl get secret prometheus-grafana --namespace prometheus -o jsonpath="{.data.admin-password}" | base64 --decode ; echo 
-
-
-create metrics viewer role in confluent cloud
-
+[source,bash]
+----
 confluent login
 confluent iam service-account create prommetrics --description "prometheus monitoring"
+----
 
 should result in something like this
 
@@ -42,18 +28,31 @@ should result in something like this
 | Description | prometheus monitoring |
 +-------------+-----------------------+
 
-=== add role binding
+
+=== assign role binding
+[source,bash]
+----
 confluent iam rbac role-binding create --role MetricsViewer --principal User:sa-35d9jo
+----
 
+check the binding
+[source,bash]
+----
 confluent iam rbac role-binding list --principal User:sa-35d9jo
+----
 
-confluent iam service-account list | grep sa-35d9jo
 
 
-# create an api key for the new service account
+=== create an api key for the new service account
+
+check the binding
+[source,bash]
+----
 confluent api-key create --resource cloud --service-account sa-35d9jo
+----
 
 should result in something like 
+
 +------------+------------------------------------------------------------------+
 | API Key    | EIXNNADZZWLJUMQQ                                                 |
 | API Secret | bJmXgfRTNHi51nVKwbCTk5u/W41sZYZGAR7T0rkzVVS6sCoQKBFjj2J2adWV99JB |
@@ -63,28 +62,49 @@ note down API key and api secret for later usage
 
 
 
-create confluent cloud scrape conf
+=== adapt and create config map
 
-use API Key and Secret from above
+use the existing config-map.yaml and adapt the following
 
-- job_name: Confluent Cloud
-    scrape_interval: 1m
-    scrape_timeout: 1m
-    honor_timestamps: true
-    static_configs:
-      - targets:
-        - api.telemetry.confluent.cloud
-    scheme: https
-    basic_auth:
-      username: API Key
-      password: API Secret
-    metrics_path: /v2/metrics/cloud/export
-    params:
-      "resource.kafka.id":
-        - lkc-1234
-        - lkc-2345
-	"resource.connector.id":
-        - lcc-1234
-        - lcc-2345
-    "resource.schema_registry.id":
-      - lsrc-1234
+set username and password to the API Key and API Secret created above
+[source,yaml]
+----        
+        basic_auth:
+          username: EIXNNADZZWLJUMQQ
+          password: bJmXgfRTNHi51nVKwbCTk5u/W41sZYZGAR7T0rkzVVS6sCoQKBFjj2J2adWV99JB
+----
+
+set your kafka cluster id accordingly (see confluent cloud ui or similar)
+[source,yaml]
+----  
+        params:
+          "resource.kafka.id":
+            - lkc-pkx1jk
+----
+
+=== create the config map with
+[source,yaml]
+----
+kubectl create -f config-map.yaml -n prometheus
+----
+
+=== create the deployment
+[source,yaml]
+----
+kubectl create  -f prometheus-deployment.yaml  -n prometheus
+----
+=== get the pods
+[source,yaml]
+----
+kubectl get pods -n prometheus
+----
+
+=== create port forward 
+have look for a pod like prometheus-deployment-xx-xx
+
+[source,yaml]
+----
+kubectl port-forward prometheus-deployment-57898c796b-rkgcs 9090:9090 -n prometheus
+----
+
+prometheus should reachable on your localhost via port 9090
