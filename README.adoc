@@ -21,13 +21,14 @@ confluent iam service-account create prommetrics --description "prometheus monit
 ----
 
 should result in something like this
-
+[source]
+----
 +-------------+-----------------------+
 | ID          | sa-xxxxxx             |
 | Name        | prommetrics           |
 | Description | prometheus monitoring |
 +-------------+-----------------------+
-
+----
 
 === assign role binding
 [source,bash]
