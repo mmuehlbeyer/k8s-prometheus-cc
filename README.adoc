@@ -21,13 +21,14 @@ confluent iam service-account create prommetrics --description "prometheus monit
 ----
 
 should result in something like this
+
 [source]
 ----
-+-------------+-----------------------+
-| ID          | sa-xxxxxx             |
-| Name        | prommetrics           |
-| Description | prometheus monitoring |
-+-------------+-----------------------+
++-------------+-----------------------+ 
+| ID          | sa-xxxxxx             | 
+| Name        | prommetrics           | 
+| Description | prometheus monitoring | 
++-------------+-----------------------+ 
 ----
 
 === assign role binding
@@ -54,11 +55,13 @@ confluent api-key create --resource cloud --service-account sa-35d9jo
 
 should result in something like 
 
-+------------+------------------------------------------------------------------+
-| API Key    | EIXNNADZZWLJUMQQ                                                 |
-| API Secret | bJmXgfRTNHi51nVKwbCTk5u/W41sZYZGAR7T0rkzVVS6sCoQKBFjj2J2adWV99JB |
-+------------+------------------------------------------------------------------+
-
+[source]
+----
++------------+------------------------------------------------------------------+ 
+| API Key    | EIXNNADZZWLJUMQQ                                                 | 
+| API Secret | bJmXgfRTNHi51nVKwbCTk5u/W41sZYZGAR7T0rkzVVS6sCoQKBFjj2J2adWV99JB | 
++------------+------------------------------------------------------------------+ 
+----
 note down API key and api secret for later usage
 
 
