@@ -5,12 +5,6 @@
 kubectl create namespace prometheus
 
 ----
-
-=== create cluster role
-[source,bash]
-----
-kubectl create -f clusterRole.yaml -n prometheus
-----
  
 === create service user via confluent cli
 
@@ -64,9 +58,13 @@ should result in something like
 ----
 note down API key and api secret for later usage
 
+=== create the rolebinding with
+[source,yaml]
+----
+kubectl create -f clusterRole.yml -n prometheus
+----
 
-
-=== adapt and create config map
+=== adapt  config map
 
 use the existing config-map.yaml and adapt the following
 
@@ -89,14 +87,21 @@ set your kafka cluster id accordingly (see confluent cloud ui or similar)
 === create the config map with
 [source,yaml]
 ----
-kubectl create -f config-map.yaml -n prometheus
+kubectl create -f config-map.yml -n prometheus
 ----
 
-=== create the deployment
+=== create the prometheus deployment
 [source,yaml]
 ----
-kubectl create  -f prometheus-deployment.yaml  -n prometheus
+kubectl create  -f prometheus-deployment.yml  -n prometheus
 ----
+
+=== create the grafana deployment
+[source,yaml]
+----
+kubectl create  -f grafana.yml  -n prometheus
+----
+
 === get the pods
 [source,yaml]
 ----
@@ -112,3 +117,41 @@ kubectl port-forward prometheus-deployment-57898c796b-rkgcs 9090:9090 -n prometh
 ----
 
 prometheus should reachable on your localhost via port 9090
+
+do the same for grafana
+
+=== add prometheus as data source
+
+login to grafana via localhost:3000 (admin/admin)
+
+go to Connections --> Data sources 
+
+Click Add data source
+
+Choose prometheus
+
+image::assets/img/prom01.png[]
+
+enter prometheus server url, e.g. http://10.48.1.47:9090 
+
+image::assets/img/prom02.png[]
+
+scroll to the bottom of the page click save & test
+
+--> a success message should appear
+
+image::assets/img/prom03.png[]
+
+
+=== import example dashboards to grafana
+
+Import the example dashboard from link:assets/grafana/ccloud.json[here] via grafana ui.
+
+
+image::assets/img/grafana01.png[]
+
+image::assets/img/grafana02.png[]
+
+image::assets/img/grafana03.png[]
+
+image::assets/img/grafana04.png[]
